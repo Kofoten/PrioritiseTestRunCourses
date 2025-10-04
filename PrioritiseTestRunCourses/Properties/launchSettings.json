@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "PrioritiseTestRunCourses": {
+      "commandName": "Project",
+      "commandLineArgs": "\"SampleData\\Test.Courses.xml\" --beam-width 3 --filters Course"
+    }
+  }
+}
