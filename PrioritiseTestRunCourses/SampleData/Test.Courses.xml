@@ -400,6 +400,19 @@
     </Course>
 
     <Course>
+      <Name>Course 6</Name>
+      <Length>120</Length>
+      <Climb>0</Climb>
+      <CourseControl type="Start">
+        <Control>S1</Control>
+      </CourseControl>
+      <CourseControl type="Finish">
+        <Control>F1</Control>
+        <LegLength>121</LegLength>
+      </CourseControl>
+    </Course>
+
+    <Course>
       <Name>All</Name>
       <Length>14840</Length>
       <Climb>0</Climb>
