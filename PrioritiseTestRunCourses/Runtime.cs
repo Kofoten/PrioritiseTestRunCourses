@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
 using PrioritiseTestRunCourses.Data;
+using PrioritiseTestRunCourses.Extensions;
 using PrioritiseTestRunCourses.Logging;
 using PrioritiseTestRunCourses.Xml;
 using System.Collections.Frozen;
-using System.Text;
 
 namespace PrioritiseTestRunCourses;
 
@@ -14,12 +14,7 @@ internal class Runtime(Options options, ILogger logger)
         var iofReader = IOFXmlReader.Create();
         if (!iofReader.TryLoad(options.IOFXmlFilePath, out var courseData, out var errors))
         {
-            var builder = new StringBuilder();
-            foreach (var error in errors)
-            {
-                builder.AppendFormat("{0}  - {1}", Environment.NewLine, error);
-            }
-            logger.FailedToLoadFile(options.IOFXmlFilePath, builder.ToString());
+            logger.FailedToLoadFile(options.IOFXmlFilePath, errors.FormatErrors());
             return 2;
         }
 

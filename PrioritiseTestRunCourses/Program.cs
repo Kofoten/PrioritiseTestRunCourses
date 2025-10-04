@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using PrioritiseTestRunCourses;
 using PrioritiseTestRunCourses.Data;
+using PrioritiseTestRunCourses.Extensions;
 using PrioritiseTestRunCourses.Logging;
-using System.Text;
 
 using var loggerFactory = LoggerFactory.Create(builder =>
 {
@@ -13,12 +13,7 @@ var logger = loggerFactory.CreateLogger<Program>();
 
 if (!Options.TryParse(args, out var options, out var errors))
 {
-    var builder = new StringBuilder();
-    foreach (var error in errors)
-    {
-        builder.AppendFormat("{0}  - {1}", Environment.NewLine, error);
-    }
-    logger.FailedToParseArguments(builder.ToString());
+    logger.FailedToParseArguments(errors.FormatErrors());
     return 1;
 }
 
