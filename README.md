@@ -1,8 +1,10 @@
 # Course Prioritizer
 
-A sophisticated command-line tool that solves a complex routing problem by finding the smallest set of pre-defined routes (`courses`) required to visit all unique locations (`controls`). It uses an advanced beam search algorithm to find a high-quality, near-optimal solution efficiently.
+This tool is designed to solve a real-world logistics problem for orienteering events: determining the most efficient order to test-run courses to ensure all control points are verified.
 
-This project was built to demonstrate advanced algorithmic problem-solving, performance optimization, and robust software design principles in .NET.
+Before a major event, a group of test runners must visit every control point to ensure they are present and that their descriptions are accurate. This tool takes all the available courses as input and calculates the smallest set of courses needed to visit every single control at least once.
+
+By using an advanced beam search algorithm, it provides a prioritized list of courses, ensuring that all controls are checked with the minimum amount of running, saving time and effort for the event organizers and volunteers.
 
 ---
 ## Features
