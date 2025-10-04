@@ -20,7 +20,7 @@ internal class Runtime(Options options, ILogger logger)
 
         var courses = courseData.RaceCourseData
             .SelectMany(x => x.Course, (_, y) => Course.FromIOF(y))
-            .Where(x => options.Filters.Any(y => x.Name.Contains(y)))
+            .Where(x => options.Filters.Count == 0 || options.Filters.Any(y => x.Name.Contains(y)))
             .Where(x => x.Controls.Count > 0)
             .ToFrozenSet();
 
