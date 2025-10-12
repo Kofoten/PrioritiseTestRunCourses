@@ -1,8 +1,9 @@
 ﻿using System.Collections.Frozen;
+using System.Collections.Immutable;
 
 namespace PrioritiseTestRunCourses.Data;
 
-internal record CandidateSolution(FrozenSet<string> CourseOrder, FrozenSet<string> UnvisitedControls)
+internal record CandidateSolution(ImmutableList<string> CourseOrder, ImmutableHashSet<string> UnvisitedControls)
 {
     public bool IsComplete => UnvisitedControls.Count == 0;
 

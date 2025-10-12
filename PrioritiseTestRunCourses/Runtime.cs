@@ -4,18 +4,19 @@ using PrioritiseTestRunCourses.Extensions;
 using PrioritiseTestRunCourses.Logging;
 using PrioritiseTestRunCourses.Xml;
 using System.Collections.Frozen;
+using System.Collections.Immutable;
 
 namespace PrioritiseTestRunCourses;
 
 internal class Runtime(Options options, ILogger logger)
 {
-    public int Run()
+    public Result<Unit, ErrorCode> Run()
     {
         var iofReader = IOFXmlReader.Create();
         if (!iofReader.TryLoad(options.IOFXmlFilePath, out var courseData, out var errors))
         {
             logger.FailedToLoadFile(options.IOFXmlFilePath, errors.FormatErrors());
-            return 2;
+            return new Failure<Unit, ErrorCode>(ErrorCode.FailedToLoadFile);
         }
 
         var courses = courseData.RaceCourseData
@@ -34,9 +35,11 @@ internal class Runtime(Options options, ILogger logger)
         var dominatedCourses = courses
             .Where(x =>
             {
-                var rarestControl = x.Controls
-                    .OrderByDescending(x => controlRarityLookup[x])
-                    .First();
+                var rarestControl = x.Controls.MaxBy(x => controlRarityLookup[x]);
+                if (rarestControl is null)
+                {
+                    return true;
+                }
 
                 return coursesInvertedIndex[rarestControl]
                     .Where(y => y.Name != x.Name && y.Controls.Count > x.Controls.Count)
@@ -49,22 +52,54 @@ internal class Runtime(Options options, ILogger logger)
             .Where(x => !dominatedCourses.Contains(x.Name))
             .ToFrozenSet();
 
-        List<CandidateSolution> beam = [
-            new CandidateSolution(
-                FrozenSet<string>.Empty,
-                controlRarityLookup.Keys.ToFrozenSet())
+        var requiredCourses = FindRequiredCourseOrder(availableCourses, controlRarityLookup);
+        if (requiredCourses is null)
+        {
+            logger.NoSolutionFound();
+            return new Failure<Unit, ErrorCode>(ErrorCode.NoSolutionFound);
+        }
+
+        string[] completeOrder = [
+            .. requiredCourses,
+            .. availableCourses
+                .Where(x => !requiredCourses.Contains(x.Name))
+                .OrderByDescending(x => x.Controls.Count)
+                .ThenBy(x => x.Name)
+                .Select(x => x.Name),
+            .. dominatedCourses.Order(),
         ];
 
+        for (int i = 0; i < completeOrder.Length; i++)
+        {
+            if (i < requiredCourses.Count)
+            {
+                Console.WriteLine($"{completeOrder[i]} (required)");
+            }
+            else
+            {
+                Console.WriteLine(completeOrder[i]);
+            }
+        }
+
+        return new Success<Unit, ErrorCode>(Unit.Value);
+    }
+
+    private ImmutableList<string>? FindRequiredCourseOrder(FrozenSet<Course> courses, FrozenDictionary<string, float> controlRarityLookup)
+    {
+        List<CandidateSolution> beam = [
+            new CandidateSolution([], [.. controlRarityLookup.Keys])
+        ];
+
+        var comparer = new CandidateSolution.RarityPriorityComparer(controlRarityLookup, 1F);
         while (beam.Count > 0)
         {
-            var comparer = new CandidateSolution.RarityPriorityComparer(controlRarityLookup, 1F);
             var topCandidates = new PriorityQueue<CandidateSolution, CandidateSolution>(comparer);
             var partitionedBeam = beam.ToLookup(c => c.IsComplete);
             var expandedSolutions = partitionedBeam[false].SelectMany(
-                x => availableCourses.Where(y => !x.CourseOrder.Contains(y.Name)),
+                x => courses.Where(y => !x.CourseOrder.Contains(y.Name)),
                 (x, y) => new CandidateSolution(
-                    x.CourseOrder.Append(y.Name).ToFrozenSet(),
-                    x.UnvisitedControls.Except(y.Controls).ToFrozenSet()));
+                    x.CourseOrder.Add(y.Name),
+                    x.UnvisitedControls.Except(y.Controls)));
 
             foreach (var candidate in partitionedBeam[true])
             {
@@ -90,33 +125,9 @@ internal class Runtime(Options options, ILogger logger)
 
         if (beam.Count == 0)
         {
-            logger.NoSolutionFound();
-            return 3;
+            return null;
         }
 
-        var required = beam[0].CourseOrder;
-        string[] completeOrder = [
-            .. required,
-            .. availableCourses
-                .Where(x => !required.Any(y => y == x.Name))
-                .OrderByDescending(x => x.Controls.Count)
-                .ThenBy(x => x.Name)
-                .Select(x => x.Name),
-            .. dominatedCourses.Order(),
-        ];
-
-        for (int i = 0; i < completeOrder.Length; i++)
-        {
-            if (i < required.Count)
-            {
-                Console.WriteLine($"{completeOrder[i]} (required)");
-            }
-            else
-            {
-                Console.WriteLine(completeOrder[i]);
-            }
-        }
-
-        return 0;
+        return beam[0].CourseOrder;
     }
 }
