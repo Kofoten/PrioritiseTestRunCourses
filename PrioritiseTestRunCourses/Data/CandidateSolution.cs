@@ -3,9 +3,13 @@ using System.Collections.Immutable;
 
 namespace PrioritiseTestRunCourses.Data;
 
-internal record CandidateSolution(ImmutableList<string> CourseOrder, ImmutableHashSet<string> UnvisitedControls)
+internal record CandidateSolution(ImmutableDictionary<string, int> Courses, ImmutableHashSet<string> UnvisitedControls)
 {
     public bool IsComplete => UnvisitedControls.Count == 0;
+
+    public static CandidateSolution Initial(IEnumerable<string> unvisitedControls) => new(
+        ImmutableDictionary<string, int>.Empty,
+        [.. unvisitedControls]);
 
     internal class RarityPriorityComparer(
         FrozenDictionary<string, float> controlRarityLookup,
@@ -32,7 +36,7 @@ internal record CandidateSolution(ImmutableList<string> CourseOrder, ImmutableHa
                 return rarityComparison;
             }
 
-            return x.CourseOrder.Count.CompareTo(y.CourseOrder.Count);
+            return x.Courses.Count.CompareTo(y.Courses.Count);
         }
     }
 }

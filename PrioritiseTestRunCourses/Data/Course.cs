@@ -4,9 +4,6 @@ namespace PrioritiseTestRunCourses.Data;
 
 internal record Course(string Name, FrozenSet<string> Controls)
 {
-    public bool IsDominatedByAnyIn(IEnumerable<Course> courses) => courses
-        .Any(y => y.Name != Name && Controls.All(z => y.Controls.Contains(z)));
-
     public static Course FromIOF(IOF.Xml.Course iofCourse)
     {
         var controls = iofCourse.CourseControl
